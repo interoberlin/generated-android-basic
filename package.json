@@ -1,0 +1,39 @@
+{
+  "name": "generator-android-basic",
+  "version": "0.1.0",
+  "description": "Yeoman Basic Android by Interoberlin",
+  "license": "MIT",
+  "main": "app/index.js",
+  "repository": "florianschwanz/generator-android-basic",
+  "author": {
+    "name": "Florian Schwanz",
+    "email": "florian.schwanz@interoberlin.de",
+    "url": "https://github.com/florianschwanz"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "files": [
+    "app"
+  ],
+  "keywords": [
+    "yeoman-generator",
+    "android",
+    "basic"
+  ],
+  "dependencies": {
+    "yeoman-generator": "^0.18.0",
+    "chalk": "^0.5.0",
+    "yosay": "^0.3.0"
+  },
+  "devDependencies": {
+    "mocha": "*"
+  },
+  "peerDependencies": {
+    "yo": ">=1.0.0"
+  }
+}
+
