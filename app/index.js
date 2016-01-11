@@ -53,34 +53,34 @@ module.exports = yeoman.generators.Base.extend({
 		));
 
 		var prompts = [{
-		  name: 'name',
+		  name: 'appName',
 		  message: 'What are you calling your app?',
 		  store: true,
 		  default : this.appname // Default to current folder name
 		},
 		{
-		  name: 'package',
+		  name: 'appPackage',
 		  message: 'What package will you be publishing the app under?',
 		  store: true
 		},
 		{
-		  name: 'targetSdk',
+		  name: 'androidTargetSdkVersion',
 		  message: 'What Android SDK will you be targeting?',
 		  store: true,
 		  default: 23  // Android 5.0 (Lollipop)
 		},
 		{
-		  name: 'minSdk',
+		  name: 'androidMinSdkVersion',
 		  message: 'What is the minimum Android SDK you wish to support?',
 		  store: true,
 		  default: 17
 		}];
 
 		this.prompt(prompts, function (props) {
-		  this.appName = props.name;
-		  this.appPackage = props.package;
-		  this.androidTargetSdkVersion = props.targetSdk;
-		  this.androidMinSdkVersion = props.minSdk;
+		  this.appName = props.appName;
+		  this.appPackage = props.appPackage;
+		  this.androidTargetSdkVersion = props.androidTargetSdkVersion;
+		  this.androidMinSdkVersion = props.androidMinSdkVersion;
 
 		  done();
 		}.bind(this));
@@ -89,7 +89,10 @@ module.exports = yeoman.generators.Base.extend({
 
   configuring: {
     saveSettings: function() {
+      this.config.set('appName', this.appName);
       this.config.set('appPackage', this.appPackage);
+      this.config.set('androidTargetSdkVersion', this.androidTargetSdkVersion);
+      this.config.set('androidMinSdkVersion', this.androidMinSdkVersion);
     }
   },
 
