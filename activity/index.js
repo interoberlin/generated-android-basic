@@ -3,6 +3,7 @@ var yeoman = require('yeoman-generator');
 var chalk = require('chalk');
 var yosay = require('yosay');
 var path = require('path');
+var wiring = require('html-wiring');
 
 /**
  * Functionally the same as directory however applies templating if file name begins with an underscore (_).
@@ -40,6 +41,10 @@ String.prototype.removeTrailingActivity = function() {
 	return this.replace(/Activity$/, '');
 }
 
+String.prototype.contains = function(substring) {
+	return this.indexOf(substring) > -1;
+}
+
 module.exports = yeoman.generators.Base.extend({
 	constructor: function () {
     yeoman.generators.Base.apply(this, arguments);
@@ -48,6 +53,7 @@ module.exports = yeoman.generators.Base.extend({
 	this.argument('activityName', { type: String, required: false });
 	this.argument('layoutPackage', { type: String, required: false });
 	this.argument('layoutName', { type: String, required: false });
+	this.argument('launcher', { type: String, required: false });
   },
   
   initializing: function () {
@@ -58,7 +64,7 @@ module.exports = yeoman.generators.Base.extend({
   prompting: {  
 	promptActivityType : function () {
 		if (this.activityType == null) {
-			var questions = 4;
+			var questions = 5;
 			var done = this.async();
 			var prompts = [
 			{
@@ -85,7 +91,7 @@ module.exports = yeoman.generators.Base.extend({
 	
 	promptActivityName : function () {
 		if (this.activityName == null) {
-			var questions = 4;
+			var questions = 5;
 			var done = this.async();
 			var prompts = [
 			{
@@ -104,8 +110,8 @@ module.exports = yeoman.generators.Base.extend({
 	},
 	
 	promptRest : function () {
-		if (this.activityPackage == null || this.layoutName == null) {
-			var questions = 4;
+		if (this.activityPackage == null || this.layoutName == null || this.launcher == null) {
+			var questions = 5;
 			var appPackage = this.config.get("appPackage");
 			var done = this.async();
 			var prompts = [
@@ -120,11 +126,29 @@ module.exports = yeoman.generators.Base.extend({
 			  message: '(4/' + questions + ') What are you calling the corresponding layout?',
 			  store: true,
 			  default: 'activity_' + this.activityName.toString().removeTrailingActivity().camelCaseToSnakeCase()
+			},
+			{
+			  type: 'list',
+			  name: 'launcher',
+			  message: '(5/' + questions + ') Should this activity be started on launch?',
+			  choices: [
+					{
+						value: 'true',
+						name: 'Yes'
+					},
+					{
+						value: 'false',
+						name: 'No'
+					}
+				],
+				store: true,
+				default: 1,
 			}];
 
 			this.prompt(prompts, function (props) {
 			  this.activityPackage = props.activityPackage;
 			  this.layoutName = props.layoutName;
+			  this.launcher = props.launcher;
 
 			  done();
 			}.bind(this));
@@ -138,6 +162,7 @@ module.exports = yeoman.generators.Base.extend({
       this.config.set('activityName', this.activityName);
       this.config.set('activityPackage', this.activityPackage);
       this.config.set('layoutName', this.layoutName);
+      this.config.set('launcher', this.launcher);
     }
   },
 
@@ -154,6 +179,24 @@ module.exports = yeoman.generators.Base.extend({
 	  this.template('app/src/main/res/layout/activity_' + this.activityType + '.xml', 'app/src/main/res/layout/' + this.layoutName + '.xml');
 	  this.copy('app/src/main/res/values/dimens.xml', 'app/src/main/res/values/dimens.xml');
 	  this.copy('app/src/main/res/values-w820dp/dimens.xml', 'app/src/main/res/values-w820p/dimens.xml');
+	  
+	  // AndroidManifest 
+	  var manifestFile = this.destinationPath('app/src/main/AndroidManifest.xml');
+	  var manifest = this.readFileAsString(manifestFile);
+	  
+	  if (this.launcher && !manifest.contains('LAUNCHER')) {
+		// Add launcher activity
+		wiring.prependToFile (manifestFile, 'application',
+			'\n<activity android:name=".view.activities.' + this.activityName + '">' + 
+				'\n<intent-filter>' + 
+					'\n<action android:name="android.intent.action.MAIN"></action>' + 
+					'\n<category android:name="android.intent.category.LAUNCHER"></category>' + 
+				'\n</intent-filter>' + 
+			'\n</activity>');
+	  } else {
+		// Add normal activity
+		wiring.prependToFile (manifestFile, 'application', '\n<activity android:name=".view.activities.' + this.activityName + '" />');
+	  }
     }
   }
 });
