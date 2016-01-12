@@ -4,6 +4,7 @@ var chalk = require('chalk');
 var yosay = require('yosay');
 var path = require('path');
 var wiring = require('html-wiring');
+var pathExists = require('path-exists');
 
 /**
  * Functionally the same as directory however applies templating if file name begins with an underscore (_).
@@ -27,6 +28,15 @@ function templateDirectory(source, destination) {
       this.copy(src, dest);
     }
   }
+}
+
+/**
+ * Determines whether a file exists in destination
+ *
+ * @param file
+ */
+function existsInDestination(file) {
+  return pathExists.sync(file);
 }
 
 String.prototype.camelCaseToSnakeCase = function() {
@@ -70,7 +80,7 @@ module.exports = yeoman.generators.Base.extend({
 			{
 				type: 'list',
 				name: 'activityType',
-				message: '(1/' + questions + ') Which *type* of activity would you like to create?',
+				message: '(1/' + questions + ') Which ' + chalk.green('type') + ' of activity would you like to create?',
 				choices: [
 					{
 						value: 'empty',
@@ -169,34 +179,62 @@ module.exports = yeoman.generators.Base.extend({
   writing: {
     app: function () {
 	  var packageDir = this.activityPackage.replace(/\./g, '/');
+	  var okay = true;
 	  
-	  this.mkdir('app/src/main/java/' + packageDir);	  
-	  this.template('app/src/main/java/view/activities/_' + this.activityType.toString().capitalizeFirst() + 'Activity.java', 'app/src/main/java/' + packageDir + '/' + this.activityName + '.java');
-	  
-	  this.mkdir('app/src/main/res/layout');
-	  this.mkdir('app/src/main/res/values');
-	  this.mkdir('app/src/main/res/values-w820p');
-	  this.template('app/src/main/res/layout/activity_' + this.activityType + '.xml', 'app/src/main/res/layout/' + this.layoutName + '.xml');
-	  this.copy('app/src/main/res/values/dimens.xml', 'app/src/main/res/values/dimens.xml');
-	  this.copy('app/src/main/res/values-w820dp/dimens.xml', 'app/src/main/res/values-w820p/dimens.xml');
-	  
-	  // AndroidManifest 
-	  var manifestFile = this.destinationPath('app/src/main/AndroidManifest.xml');
-	  var manifest = this.readFileAsString(manifestFile);
-	  
-	  if (this.launcher && !manifest.contains('LAUNCHER')) {
-		// Add launcher activity
-		wiring.prependToFile (manifestFile, 'application',
-			'\n<activity android:name=".view.activities.' + this.activityName + '">' + 
-				'\n<intent-filter>' + 
-					'\n<action android:name="android.intent.action.MAIN"></action>' + 
-					'\n<category android:name="android.intent.category.LAUNCHER"></category>' + 
-				'\n</intent-filter>' + 
-			'\n</activity>');
-	  } else {
-		// Add normal activity
-		wiring.prependToFile (manifestFile, 'application', '\n<activity android:name=".view.activities.' + this.activityName + '" />');
+	  // Checks if activity file already exists
+	  var activityFile = 'app/src/main/java/' + packageDir + '/' + this.activityName + '.java';
+	  if (existsInDestination(this.destinationPath(activityFile))) {
+		  console.log(chalk.red('    error') + ' activity ' + activityFile + ' already exists');
+		  okay = false;
 	  }
+	  
+	  // Check if layout file already exists
+	  var layoutFile = 'app/src/main/res/layout/' + this.layoutName + '.xml';
+	  if (existsInDestination(this.destinationPath(layoutFile))) {
+		  console.log(chalk.red('    error') + ' layout ' + layoutFile + ' already exists');
+		  okay = false;
+	  }
+	  
+	  if (okay) {
+		  // activity
+		  this.mkdir('app/src/main/java/' + packageDir);	  
+		  this.template('app/src/main/java/view/activities/_' + this.activityType.toString().capitalizeFirst() + 'Activity.java', activityFile);
+	  	  
+		  // resources
+		  this.mkdir('app/src/main/res/layout');
+		  this.mkdir('app/src/main/res/values');
+		  this.mkdir('app/src/main/res/values-w820p');
+		  this.template('app/src/main/res/layout/activity_' + this.activityType + '.xml', layoutFile);
+		  this.copy('app/src/main/res/values/dimens.xml', 'app/src/main/res/values/dimens.xml');
+		  this.copy('app/src/main/res/values-w820dp/dimens.xml', 'app/src/main/res/values-w820p/dimens.xml');
+		  
+		  // manifest 
+		  var manifestFile = this.destinationPath('app/src/main/AndroidManifest.xml');
+		  var manifest = this.readFileAsString(manifestFile);
+		  
+		  if (this.launcher) {
+			if (!manifest.contains('LAUNCHER')) {
+			// Add launcher activity
+			wiring.prependToFile (manifestFile, 'application',
+				'\n<activity android:name=".view.activities.' + this.activityName + '">' + 
+					'\n<intent-filter>' + 
+						'\n<action android:name="android.intent.action.MAIN"></action>' + 
+						'\n<category android:name="android.intent.category.LAUNCHER"></category>' + 
+					'\n</intent-filter>' + 
+				'\n</activity>');
+			} else {
+				// Add normal activity
+				wiring.prependToFile (manifestFile, 'application', '\n<activity android:name=".view.activities.' + this.activityName + '" />');
+				console.log(chalk.yellow('     warn') + ' manifest already contains an activity with launcher intent');
+			}
+			
+			console.log(chalk.cyan('   update') + ' app/src/main/AndroidManifest.xml');
+		  } else {
+			// Add normal activity
+			wiring.prependToFile (manifestFile, 'application', '\n<activity android:name=".view.activities.' + this.activityName + '" />');
+			console.log(chalk.cyan('   update') + ' app/src/main/AndroidManifest.xml');
+		  }
+	    }
     }
   }
 });
