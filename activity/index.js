@@ -85,6 +85,10 @@ module.exports = yeoman.generators.Base.extend({
 					{
 						value: 'empty',
 						name: 'empty activity'
+					},
+					{
+						value: 'blank',
+						name: 'blank activity'
 					}
 				],
 				store: true,
