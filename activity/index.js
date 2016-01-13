@@ -69,6 +69,7 @@ module.exports = yeoman.generators.Base.extend({
   initializing: function () {
     this.pkg = require('../package.json');
     this.templateDirectory = templateDirectory.bind(this);
+	this.okay = true;
   },
 
   prompting: {  
@@ -181,64 +182,171 @@ module.exports = yeoman.generators.Base.extend({
   },
 
   writing: {
-    app: function () {
+    check: function () {
 	  var packageDir = this.activityPackage.replace(/\./g, '/');
-	  var okay = true;
+	  var activityFile = 'app/src/main/java/' + packageDir + '/' + this.activityName + '.java';
+	  var layoutFile = 'app/src/main/res/layout/' + this.layoutName + '.xml';
 	  
 	  // Checks if activity file already exists
-	  var activityFile = 'app/src/main/java/' + packageDir + '/' + this.activityName + '.java';
 	  if (existsInDestination(this.destinationPath(activityFile))) {
 		  console.log(chalk.red('    error') + ' activity ' + activityFile + ' already exists');
-		  okay = false;
+		  this.okay = false;
 	  }
-	  
+
 	  // Check if layout file already exists
-	  var layoutFile = 'app/src/main/res/layout/' + this.layoutName + '.xml';
 	  if (existsInDestination(this.destinationPath(layoutFile))) {
 		  console.log(chalk.red('    error') + ' layout ' + layoutFile + ' already exists');
-		  okay = false;
+		  this.okay = false;
 	  }
+	},
 	  
-	  if (okay) {
-		  // activity
+	activity: function () {
+	  if (this.okay) {
+		  var packageDir = this.activityPackage.replace(/\./g, '/');
+		  var activityFile = 'app/src/main/java/' + packageDir + '/' + this.activityName + '.java';
+		  
 		  this.mkdir('app/src/main/java/' + packageDir);	  
 		  this.template('app/src/main/java/view/activities/_' + this.activityType.toString().capitalizeFirst() + 'Activity.java', activityFile);
-	  	  
-		  // resources
-		  this.mkdir('app/src/main/res/layout');
-		  this.mkdir('app/src/main/res/values');
-		  this.mkdir('app/src/main/res/values-w820p');
-		  this.template('app/src/main/res/layout/activity_' + this.activityType + '.xml', layoutFile);
-		  this.copy('app/src/main/res/values/dimens.xml', 'app/src/main/res/values/dimens.xml');
-		  this.copy('app/src/main/res/values-w820dp/dimens.xml', 'app/src/main/res/values-w820p/dimens.xml');
+	  }
+	},
+	
+	prepareRes: function () {
+		if (this.okay) {
+		  switch (this.activityType.toString()) {
+			  case 'empty' : {
+				this.mkdir('app/src/main/res/values');
+				
+				var valuesDimensFile = 'app/src/main/res/values/dimens.xml';
+				var valuesDimensFileDest = this.destinationPath(valuesDimensFile);
+				if (!existsInDestination(valuesDimensFileDest)) { this.copy('app/src/main/res/values/dimens.xml', 'app/src/main/res/values/dimens.xml'); }
+				
+				break;  
+			  }
+			  case 'blank' : {
+				this.mkdir('app/src/main/res/values');
+				
+				var valuesDimensFile = 'app/src/main/res/values/dimens.xml';
+				var valuesDimensFileDest = this.destinationPath(valuesDimensFile);
+				if (!existsInDestination(valuesDimensFileDest)) { this.copy('app/src/main/res/values/dimens.xml', 'app/src/main/res/values/dimens.xml'); }
+				
+				var valuesStringsFile = 'app/src/main/res/values/strings.xml';
+				var valuesStringsFileDest = this.destinationPath(valuesStringsFile);
+				if (!existsInDestination(valuesStringsFileDest)) { this.copy('app/src/main/res/values/strings.xml', 'app/src/main/res/values/strings.xml'); }
+				
+				break;  
+			  } 			  
+		  }
+	  }
+	},
+	
+	res: function () {
+	  if (this.okay) {
+		  var valuesDimensFile = 'app/src/main/res/values/dimens.xml';
+		  var valuesStringsFile = 'app/src/main/res/values/strings.xml';
 		  
-		  // manifest 
+		  switch (this.activityType.toString()) {
+			  case 'empty' : {
+				var valuesDimensUpdated = false;
+				var valuesDimensFileDest = this.destinationPath(valuesDimensFile);
+				var valuesDimens = this.readFileAsString(valuesDimensFileDest);
+				
+				if (!valuesDimens.contains('activity_horizontal_margin')) {
+					wiring.appendToFile (valuesDimensFileDest, 'resources', '\t<dimen name="activity_horizontal_margin">16dp</dimen>\n');
+					valuesDimensUpdated = true;
+				}
+				if (!valuesDimens.contains('activity_vertical_margin')) {
+					wiring.appendToFile (valuesDimensFileDest, 'resources', '\t<dimen name="activity_vertical_margin">16dp</dimen>\n');
+					valuesDimensUpdated = true;
+				}
+				if (valuesDimensUpdated) {
+					console.log(chalk.cyan('   update') + ' app/src/main/res/values/dimens.xml');
+				}
+				
+				var valuesStringsUpdated = false;
+				var valuesStringsFileDest = this.destinationPath(valuesStringsFile);
+				var valuesStrings = this.readFileAsString(valuesStringsFileDest);
+				
+				if (!valuesStrings.contains('title_' + this.layoutName)) {
+					wiring.appendToFile (valuesStringsFileDest, 'resources', '\t<string name="title_' + this.layoutName + '">' + this.activityName.toString().removeTrailingActivity() + '</string>  \n');
+					valuesStringsUpdated = true;
+				}
+				if (valuesStringsUpdated) {
+					console.log(chalk.cyan('   update') + ' ' + valuesStringsFile);
+				}
+				break;  
+			  }
+			  case 'blank' : {
+				var valuesDimensUpdated = false;
+				var valuesDimensFileDest = this.destinationPath(valuesDimensFile);
+				var valuesDimens = this.readFileAsString(valuesDimensFileDest);
+				
+				if (!valuesDimens.contains('activity_horizontal_margin')) {
+					wiring.appendToFile (valuesDimensFileDest, 'resources', '\t<dimen name="activity_horizontal_margin">16dp</dimen>\n');
+					valuesDimensUpdated = true;
+				}
+				if (!valuesDimens.contains('activity_vertical_margin')) {
+					wiring.appendToFile (valuesDimensFileDest, 'resources', '\t<dimen name="activity_vertical_margin">16dp</dimen>\n');
+					valuesDimensUpdated = true;
+				}
+				if (valuesDimensUpdated) {
+					console.log(chalk.cyan('   update') + ' ' + valuesDimensFile);
+				}
+				
+				var valuesStringsUpdated = false;
+				var valuesStringsFileDest = this.destinationPath(valuesStringsFile);
+				var valuesStrings = this.readFileAsString(valuesStringsFileDest);
+				
+				if (!valuesStrings.contains('title_' + this.layoutName)) {
+					wiring.appendToFile (valuesStringsFileDest, 'resources', '\t<string name="title_' + this.layoutName + '">' + this.activityName.toString().removeTrailingActivity() + '</string>  \n');
+					valuesStringsUpdated = true;
+				}
+				if (valuesStringsUpdated) {
+					console.log(chalk.cyan('   update') + ' ' + valuesStringsFile);
+				}
+				
+				break;
+			  }
+		  }
+	  }
+	},
+
+	layout: function () {
+	  if (this.okay) {
+		  var layoutFile = 'app/src/main/res/layout/' + this.layoutName + '.xml';
+		  
+		  this.mkdir('app/src/main/res/layout');
+		  this.template('app/src/main/res/layout/activity_' + this.activityType + '.xml', layoutFile);
+	  }
+	},
+	
+	manifest: function () {
+	  if (this.okay) {			  
 		  var manifestFile = this.destinationPath('app/src/main/AndroidManifest.xml');
 		  var manifest = this.readFileAsString(manifestFile);
 		  
 		  if (this.launcher) {
 			if (!manifest.contains('LAUNCHER')) {
 			// Add launcher activity
-			wiring.prependToFile (manifestFile, 'application',
-				'\n<activity android:name=".view.activities.' + this.activityName + '">' + 
-					'\n<intent-filter>' + 
-						'\n<action android:name="android.intent.action.MAIN"></action>' + 
-						'\n<category android:name="android.intent.category.LAUNCHER"></category>' + 
-					'\n</intent-filter>' + 
-				'\n</activity>');
+			wiring.appendToFile (manifestFile, 'application',
+				'\n\t<activity android:name=".view.activities.' + this.activityName + '" android:label="@string/title_' + this.layoutName + '" />\n' + 
+					'\t<intent-filter>\n' + 
+						'\t<action android:name="android.intent.action.MAIN"></action>\n' + 
+						'\t<category android:name="android.intent.category.LAUNCHER"></category>\n' + 
+					'\t</intent-filter>\n' + 
+				'\t</activity>\n');
 			} else {
 				// Add normal activity
-				wiring.prependToFile (manifestFile, 'application', '\n<activity android:name=".view.activities.' + this.activityName + '" />');
+				wiring.appendToFile (manifestFile, 'application', '\n\t<activity android:name=".view.activities.' + this.activityName + '" android:label="@string/title_' + this.layoutName + '" />\n');
 				console.log(chalk.yellow('     warn') + ' manifest already contains an activity with launcher intent');
 			}
 			
 			console.log(chalk.cyan('   update') + ' app/src/main/AndroidManifest.xml');
 		  } else {
 			// Add normal activity
-			wiring.prependToFile (manifestFile, 'application', '\n<activity android:name=".view.activities.' + this.activityName + '" />');
+			wiring.appendToFile (manifestFile, 'application', '\n\t<activity android:name=".view.activities.' + this.activityName + '" android:label="@string/title_' + this.layoutName + '" />\n');
 			console.log(chalk.cyan('   update') + ' app/src/main/AndroidManifest.xml');
 		  }
-	    }
+	  }
     }
   }
 });

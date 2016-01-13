@@ -8,6 +8,6 @@ public class <%= activityName %> extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.<%= activityPackage %>);
+        setContentView(R.layout.<%= layoutName %>);
     }
 }
