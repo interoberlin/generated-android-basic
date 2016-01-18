@@ -220,14 +220,20 @@ module.exports = yeoman.generators.Base.extend({
 		  var stringsFile = 'app/src/main/res/values/strings.xml';
 		  var dimensFile = 'app/src/main/res/values/dimens.xml';
 		  var colorsFile = 'app/src/main/res/values/colors.xml';
+		  var stylesFile = 'app/src/main/res/values/styles.xml';
+		  var attrsFile = 'app/src/main/res/values/attrs.xml';
 		  
 		  var stringsUpdated = false;
 		  var dimensUpdated = false;
 		  var colorsUpdated = false;
+		  var stylesUpdated = false;
+		  var attrsUpdated = false;
 		  
 		  var stringsFileDest = this.destinationPath(stringsFile);
 		  var dimensFileDest = this.destinationPath(dimensFile);
 		  var colorsFileDest = this.destinationPath(colorsFile);
+		  var stylesFileDest = this.destinationPath(stylesFile);
+		  var attrsFileDest = this.destinationPath(attrsFile);
 		  
 		  this.mkdir('app/src/main/res/values');
 		  
@@ -283,9 +289,13 @@ module.exports = yeoman.generators.Base.extend({
 			  case 'fullscreen' : {
 				copyIfMissing(dimensFile, this.destinationPath(dimensFile));
 				copyIfMissing(colorsFile, this.destinationPath(colorsFile));
+				copyIfMissing(stylesFile, this.destinationPath(stylesFile));
+				copyIfMissing(attrsFile, this.destinationPath(attrsFile));
 				
 				var strings = this.readFileAsString(stringsFileDest);
 				var colors = this.readFileAsString(colorsFileDest);
+				var styles = this.readFileAsString(stylesFileDest);
+				var attrs = this.readFileAsString(attrsFileDest);
 				
 				if (!strings.contains('title_' + this.layoutName)) { 
 					wiring.appendToFile (stringsFileDest, 'resources', '\t<string name="title_' + this.layoutName + '">' + this.activityName.toString().removeTrailingActivity() + '</string>  \n');
@@ -305,9 +315,26 @@ module.exports = yeoman.generators.Base.extend({
 					wiring.appendToFile (colorsFileDest, 'resources', '\t<color name="black_overlay">#66000000</color>\n');
 					colorsUpdated = true;
 				}
-  
+				
+				if (!styles.contains('<style name="FullscreenTheme" parent="@android:style/Theme.Holo.Light">')) {
+					wiring.appendToFile (stylesFileDest, 'resources', '\t<style name="FullscreenTheme" parent="@android:style/Theme.Holo.Light">\n\t<item name="android:actionBarStyle">@style/FullscreenActionBarStyle</item>\n\t<item name="android:windowActionBarOverlay">true</item>\n\t<item name="android:windowBackground">@null</item>\n\t<item name="metaButtonBarStyle">?android:attr/buttonBarStyle</item>\n\t<item name="metaButtonBarButtonStyle">?android:attr/buttonBarButtonStyle</item>\n</style>');
+					stylesUpdated = true;
+				}
+				
+				if (!styles.contains('<style name="FullscreenActionBarStyle" parent="android:Widget.Holo.ActionBar">')) {
+					wiring.appendToFile (stylesFileDest, 'resources', '\t<style name="FullscreenActionBarStyle" parent="android:Widget.Holo.ActionBar">\n\t<item name="android:background">@color/black_overlay</item>\n</style>');
+					stylesUpdated = true;
+				}
+				
+				if (!attrs.contains('<declare-styleable name="ButtonBarContainerTheme">')) {
+					wiring.appendFile (attrsFileDest, 'resources', '\t<declare-styleable name="ButtonBarContainerTheme">\n\t<attr name="metaButtonBarStyle" format="reference" />\n\t        <attr name="metaButtonBarButtonStyle" format="reference" />\n</declare-styleable>');
+					attrsUpdated = true;
+				}
+				
   				if (stringsUpdated) { console.log(chalk.cyan('   update') + ' ' + stringsFile); }
   				if (colorsUpdated) { console.log(chalk.cyan('   update') + ' ' + colorsFile); }
+  				if (stylesUpdated) { console.log(chalk.cyan('   update') + ' ' + stylesFile); }
+  				if (attrsUpdated) { console.log(chalk.cyan('   update') + ' ' + attrsFile); }
 				break;
 			  }
 		  }

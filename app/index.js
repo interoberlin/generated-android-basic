@@ -34,8 +34,6 @@ module.exports = yeoman.generators.Base.extend({
 
 	this.argument('appName', { type: String, required: false });
 	this.argument('appPackage', { type: String, required: false });
-	this.argument('androidTargetSdkVersion', { type: Number, required: false });
-	this.argument('androidMinSdkVersion', { type: Number, required: false });
   },
   
   initializing: function () {
@@ -44,7 +42,10 @@ module.exports = yeoman.generators.Base.extend({
   },
 
   prompting: function () {
-	if (this.appName == null || this.appPackage == null || this.androidTargetSdkVersion == null || this.androidMinSdkVersion == null) {
+	this.androidTargetSdkVersion = 23;
+	this.androidMinSdkVersion = 17;
+	  
+	if (this.appName == null || this.appPackage == null) {
 		var done = this.async();
 
 		// Have Yeoman greet the user.
