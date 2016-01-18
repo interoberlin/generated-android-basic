@@ -31,12 +31,22 @@ function templateDirectory(source, destination) {
 }
 
 /**
- * Determines whether a file exists in destination
+ * Determines whether a file exists
  *
  * @param file
  */
-function existsInDestination(file) {
+function exists(file) {
   return pathExists.sync(file);
+}
+
+/**
+ * Copies a file from template to destination if missing
+ *
+ * @param file
+ * @param destinationPath
+ */
+function copyIfMissing(file, destinationPath) {
+	if (!exists(destinationPath)) { this.copy(file, file); }
 }
 
 String.prototype.camelCaseToSnakeCase = function() {
@@ -83,14 +93,9 @@ module.exports = yeoman.generators.Base.extend({
 				name: 'activityType',
 				message: '(1/' + questions + ') Which ' + chalk.green('type') + ' of activity would you like to create?',
 				choices: [
-					{
-						value: 'empty',
-						name: 'empty activity'
-					},
-					{
-						value: 'blank',
-						name: 'blank activity'
-					}
+					{ value: 'empty', name: 'empty activity' },
+					{ value: 'blank', name: 'blank activity' },
+					{ value: 'fullscreen', name: 'fullscreen activity'}
 				],
 				store: true,
 				default: 0
@@ -148,11 +153,11 @@ module.exports = yeoman.generators.Base.extend({
 			  message: '(5/' + questions + ') Should this activity be started on launch?',
 			  choices: [
 					{
-						value: 'true',
+						value: true,
 						name: 'Yes'
 					},
 					{
-						value: 'false',
+						value: false,
 						name: 'No'
 					}
 				],
@@ -188,18 +193,18 @@ module.exports = yeoman.generators.Base.extend({
 	  var layoutFile = 'app/src/main/res/layout/' + this.layoutName + '.xml';
 	  
 	  // Checks if activity file already exists
-	  if (existsInDestination(this.destinationPath(activityFile))) {
+	  if (exists(this.destinationPath(activityFile))) {
 		  console.log(chalk.red('    error') + ' activity ' + activityFile + ' already exists');
 		  this.okay = false;
 	  }
 
 	  // Check if layout file already exists
-	  if (existsInDestination(this.destinationPath(layoutFile))) {
+	  if (exists(this.destinationPath(layoutFile))) {
 		  console.log(chalk.red('    error') + ' layout ' + layoutFile + ' already exists');
 		  this.okay = false;
 	  }
 	},
-	  
+	
 	activity: function () {
 	  if (this.okay) {
 		  var packageDir = this.activityPackage.replace(/\./g, '/');
@@ -210,112 +215,111 @@ module.exports = yeoman.generators.Base.extend({
 	  }
 	},
 	
-	prepareRes: function () {
-		if (this.okay) {
-		  switch (this.activityType.toString()) {
-			  case 'empty' : {
-				this.mkdir('app/src/main/res/values');
-				
-				var valuesDimensFile = 'app/src/main/res/values/dimens.xml';
-				var valuesDimensFileDest = this.destinationPath(valuesDimensFile);
-				if (!existsInDestination(valuesDimensFileDest)) { this.copy('app/src/main/res/values/dimens.xml', 'app/src/main/res/values/dimens.xml'); }
-				
-				break;  
-			  }
-			  case 'blank' : {
-				this.mkdir('app/src/main/res/values');
-				
-				var valuesDimensFile = 'app/src/main/res/values/dimens.xml';
-				var valuesDimensFileDest = this.destinationPath(valuesDimensFile);
-				if (!existsInDestination(valuesDimensFileDest)) { this.copy('app/src/main/res/values/dimens.xml', 'app/src/main/res/values/dimens.xml'); }
-				
-				var valuesStringsFile = 'app/src/main/res/values/strings.xml';
-				var valuesStringsFileDest = this.destinationPath(valuesStringsFile);
-				if (!existsInDestination(valuesStringsFileDest)) { this.copy('app/src/main/res/values/strings.xml', 'app/src/main/res/values/strings.xml'); }
-				
-				break;  
-			  } 			  
-		  }
-	  }
-	},
-	
 	res: function () {
 	  if (this.okay) {
-		  var valuesDimensFile = 'app/src/main/res/values/dimens.xml';
-		  var valuesStringsFile = 'app/src/main/res/values/strings.xml';
+		  var stringsFile = 'app/src/main/res/values/strings.xml';
+		  var dimensFile = 'app/src/main/res/values/dimens.xml';
+		  var colorsFile = 'app/src/main/res/values/colors.xml';
+		  
+		  var stringsUpdated = false;
+		  var dimensUpdated = false;
+		  var colorsUpdated = false;
+		  
+		  var stringsFileDest = this.destinationPath(stringsFile);
+		  var dimensFileDest = this.destinationPath(dimensFile);
+		  var colorsFileDest = this.destinationPath(colorsFile);
+		  
+		  this.mkdir('app/src/main/res/values');
 		  
 		  switch (this.activityType.toString()) {
 			  case 'empty' : {
-				var valuesDimensUpdated = false;
-				var valuesDimensFileDest = this.destinationPath(valuesDimensFile);
-				var valuesDimens = this.readFileAsString(valuesDimensFileDest);
+				copyIfMissing(stringsFile, this.destinationPath(stringsFile));
+				copyIfMissing(dimensFile, this.destinationPath(dimensFile));
 				
-				if (!valuesDimens.contains('activity_horizontal_margin')) {
-					wiring.appendToFile (valuesDimensFileDest, 'resources', '\t<dimen name="activity_horizontal_margin">16dp</dimen>\n');
-					valuesDimensUpdated = true;
+				var strings = this.readFileAsString(stringsFileDest);
+				var dimens = this.readFileAsString(dimensFileDest);	
+				
+				if (!strings.contains('title_' + this.layoutName)) { 
+					wiring.appendToFile (stringsFileDest, 'resources', '\t<string name="title_' + this.layoutName + '">' + this.activityName.toString().removeTrailingActivity() + '</string>  \n');
+					stringsUpdated = true;
 				}
-				if (!valuesDimens.contains('activity_vertical_margin')) {
-					wiring.appendToFile (valuesDimensFileDest, 'resources', '\t<dimen name="activity_vertical_margin">16dp</dimen>\n');
-					valuesDimensUpdated = true;
+				if (!dimens.contains('activity_horizontal_margin')) {
+					wiring.appendToFile (dimensFileDest, 'resources', '\t<dimen name="activity_horizontal_margin">16dp</dimen>\n');
+					dimensUpdated = true;
 				}
-				if (valuesDimensUpdated) {
-					console.log(chalk.cyan('   update') + ' app/src/main/res/values/dimens.xml');
+				if (!dimens.contains('activity_vertical_margin')) {
+					wiring.appendToFile (dimensFileDest, 'resources', '\t<dimen name="activity_vertical_margin">16dp</dimen>\n');
+					dimensUpdated = true;
 				}
 				
-				var valuesStringsUpdated = false;
-				var valuesStringsFileDest = this.destinationPath(valuesStringsFile);
-				var valuesStrings = this.readFileAsString(valuesStringsFileDest);
-				
-				if (!valuesStrings.contains('title_' + this.layoutName)) {
-					wiring.appendToFile (valuesStringsFileDest, 'resources', '\t<string name="title_' + this.layoutName + '">' + this.activityName.toString().removeTrailingActivity() + '</string>  \n');
-					valuesStringsUpdated = true;
-				}
-				if (valuesStringsUpdated) {
-					console.log(chalk.cyan('   update') + ' ' + valuesStringsFile);
-				}
+				if (dimensUpdated) { console.log(chalk.cyan('   update') + ' ' + dimensFile); }
+				if (stringsUpdated) { console.log(chalk.cyan('   update') + ' ' + stringsFile);}
 				break;  
 			  }
 			  case 'blank' : {
-				var valuesDimensUpdated = false;
-				var valuesDimensFileDest = this.destinationPath(valuesDimensFile);
-				var valuesDimens = this.readFileAsString(valuesDimensFileDest);
+				copyIfMissing(stringsFile, this.destinationPath(stringsFile));
+				copyIfMissing(dimensFile, this.destinationPath(dimensFile));
 				
-				if (!valuesDimens.contains('activity_horizontal_margin')) {
-					wiring.appendToFile (valuesDimensFileDest, 'resources', '\t<dimen name="activity_horizontal_margin">16dp</dimen>\n');
-					valuesDimensUpdated = true;
-				}
-				if (!valuesDimens.contains('activity_vertical_margin')) {
-					wiring.appendToFile (valuesDimensFileDest, 'resources', '\t<dimen name="activity_vertical_margin">16dp</dimen>\n');
-					valuesDimensUpdated = true;
-				}
-				if (valuesDimensUpdated) {
-					console.log(chalk.cyan('   update') + ' ' + valuesDimensFile);
-				}
+				var strings = this.readFileAsString(stringsFileDest);
+				var dimens = this.readFileAsString(dimensFileDest);
 				
-				var valuesStringsUpdated = false;
-				var valuesStringsFileDest = this.destinationPath(valuesStringsFile);
-				var valuesStrings = this.readFileAsString(valuesStringsFileDest);
-				
-				if (!valuesStrings.contains('title_' + this.layoutName)) {
-					wiring.appendToFile (valuesStringsFileDest, 'resources', '\t<string name="title_' + this.layoutName + '">' + this.activityName.toString().removeTrailingActivity() + '</string>  \n');
-					valuesStringsUpdated = true;
+				if (!strings.contains('title_' + this.layoutName)) {
+					wiring.appendToFile (stringsFileDest, 'resources', '\t<string name="title_' + this.layoutName + '">' + this.activityName.toString().removeTrailingActivity() + '</string>  \n');
+					stringsUpdated = true;
 				}
-				if (valuesStringsUpdated) {
-					console.log(chalk.cyan('   update') + ' ' + valuesStringsFile);
+				if (!dimens.contains('<dimen name="activity_horizontal_margin">')) {
+					wiring.appendToFile (dimensFileDest, 'resources', '\t<dimen name="activity_horizontal_margin">16dp</dimen>\n');
+					dimensUpdated = true;
+				}
+				if (!dimens.contains('<dimen name="activity_vertical_margin">')) {
+					wiring.appendToFile (dimensFileDest, 'resources', '\t<dimen name="activity_vertical_margin">16dp</dimen>\n');
+					dimensUpdated = true;
 				}
 				
+				if (dimensUpdated) { console.log(chalk.cyan('   update') + ' ' + dimensFile); }
+				if (stringsUpdated) { console.log(chalk.cyan('   update') + ' ' + stringsFile);}
+				break;
+			  }
+			  case 'fullscreen' : {
+				copyIfMissing(dimensFile, this.destinationPath(dimensFile));
+				copyIfMissing(colorsFile, this.destinationPath(colorsFile));
+				
+				var strings = this.readFileAsString(stringsFileDest);
+				var colors = this.readFileAsString(colorsFileDest);
+				
+				if (!strings.contains('title_' + this.layoutName)) { 
+					wiring.appendToFile (stringsFileDest, 'resources', '\t<string name="title_' + this.layoutName + '">' + this.activityName.toString().removeTrailingActivity() + '</string>  \n');
+					stringsUpdated = true;
+				}
+				if (!strings.contains('<string name="dummy_content">')) {
+					wiring.appendToFile (stringsFileDest, 'resources', '\t<string name="dummy_content">DUMMY\nCONTENT</string>\n');
+					stringsUpdated = true;
+				}
+				
+				if (!strings.contains('<string name="dummy_button">')) {
+					wiring.appendToFile (stringsFileDest, 'resources', '\t<string name="dummy_button">Dummy Button</string>\n');
+					stringsUpdated = true;
+				}
+				
+				if (!colors.contains('<color name="black_overlay">')) {
+					wiring.appendToFile (colorsFileDest, 'resources', '\t<color name="black_overlay">#66000000</color>\n');
+					colorsUpdated = true;
+				}
+  
+  				if (stringsUpdated) { console.log(chalk.cyan('   update') + ' ' + stringsFile); }
+  				if (colorsUpdated) { console.log(chalk.cyan('   update') + ' ' + colorsFile); }
 				break;
 			  }
 		  }
 	  }
 	},
-
+	
 	layout: function () {
 	  if (this.okay) {
 		  var layoutFile = 'app/src/main/res/layout/' + this.layoutName + '.xml';
 		  
 		  this.mkdir('app/src/main/res/layout');
-		  this.template('app/src/main/res/layout/activity_' + this.activityType + '.xml', layoutFile);
+		  this.template('app/src/main/res/layout/_activity_' + this.activityType + '.xml', layoutFile);
 	  }
 	},
 	
