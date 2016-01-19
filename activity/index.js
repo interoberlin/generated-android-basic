@@ -71,7 +71,7 @@ module.exports = yeoman.generators.Base.extend({
 
 	this.argument('activityType', { type: String, required: false });
 	this.argument('activityName', { type: String, required: false });
-	this.argument('layoutPackage', { type: String, required: false });
+	this.argument('activityPackage', { type: String, required: false });
 	this.argument('layoutName', { type: String, required: false });
 	this.argument('launcher', { type: String, required: false });
   },
