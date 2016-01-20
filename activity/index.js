@@ -39,16 +39,6 @@ function exists(file) {
   return pathExists.sync(file);
 }
 
-/**
- * Copies a file from template to destination if missing
- *
- * @param file
- * @param destinationPath
- */
-function copyIfMissing(file, destinationPath) {
-	if (!exists(destinationPath)) { this.copy(file, file); }
-}
-
 String.prototype.camelCaseToSnakeCase = function() {
     return this.replace(/\.?([A-Z]+)/g, function (x,y){return "_" + y.toLowerCase()}).replace(/^_/, "");
 }
@@ -186,7 +176,7 @@ module.exports = yeoman.generators.Base.extend({
     }
   },
 
-  writing: {
+  writing: {	  
     check: function () {
 	  var packageDir = this.activityPackage.replace(/\./g, '/');
 	  var activityFile = 'app/src/main/java/' + packageDir + '/' + this.activityName + '.java';
@@ -215,6 +205,38 @@ module.exports = yeoman.generators.Base.extend({
 	  }
 	},
 	
+	resPrep: function () {
+	  if (this.okay) {
+		var stringsFile = 'app/src/main/res/values/strings.xml';
+		var dimensFile = 'app/src/main/res/values/dimens.xml';
+		var colorsFile = 'app/src/main/res/values/colors.xml';
+		var stylesFile = 'app/src/main/res/values/styles.xml';
+		var attrsFile = 'app/src/main/res/values/attrs.xml';
+		
+		this.mkdir('app/src/main/res/values');  
+		  
+		switch (this.activityType.toString()) {
+		  case 'empty' : {
+			if (!exists(this.destinationPath(stringsFile))) { this.copy(stringsFile, stringsFile); }
+			if (!exists(this.destinationPath(dimensFile))) { this.copy(dimensFile, dimensFile); }
+			break;  
+		  }
+		  case 'blank' : {
+			if (!exists(this.destinationPath(stringsFile))) { this.copy(stringsFile, stringsFile); }
+			if (!exists(this.destinationPath(dimensFile))) { this.copy(dimensFile, dimensFile); }
+			break;
+		  }
+		  case 'fullscreen' : {
+			if (!exists(this.destinationPath(stringsFile))) { this.copy(stringsFile, stringsFile); }
+			if (!exists(this.destinationPath(colorsFile))) { this.copy(colorsFile, colorsFile); }
+			if (!exists(this.destinationPath(stylesFile))) { this.copy(stylesFile, stylesFile); }
+			if (!exists(this.destinationPath(attrsFile))) { this.copy(attrsFile, attrsFile); }
+			break;
+		  }
+		}
+	  }
+	},
+	
 	res: function () {
 	  if (this.okay) {
 		  var stringsFile = 'app/src/main/res/values/strings.xml';
@@ -222,26 +244,21 @@ module.exports = yeoman.generators.Base.extend({
 		  var colorsFile = 'app/src/main/res/values/colors.xml';
 		  var stylesFile = 'app/src/main/res/values/styles.xml';
 		  var attrsFile = 'app/src/main/res/values/attrs.xml';
-		  
-		  var stringsUpdated = false;
-		  var dimensUpdated = false;
-		  var colorsUpdated = false;
-		  var stylesUpdated = false;
-		  var attrsUpdated = false;
-		  
+		  		  
 		  var stringsFileDest = this.destinationPath(stringsFile);
 		  var dimensFileDest = this.destinationPath(dimensFile);
 		  var colorsFileDest = this.destinationPath(colorsFile);
 		  var stylesFileDest = this.destinationPath(stylesFile);
 		  var attrsFileDest = this.destinationPath(attrsFile);
-		  
-		  this.mkdir('app/src/main/res/values');
-		  
+
+		  var stringsUpdated = false;
+		  var dimensUpdated = false;
+		  var colorsUpdated = false;
+		  var stylesUpdated = false;
+		  var attrsUpdated = false;
+		  	  		  
 		  switch (this.activityType.toString()) {
-			  case 'empty' : {
-				copyIfMissing(stringsFile, this.destinationPath(stringsFile));
-				copyIfMissing(dimensFile, this.destinationPath(dimensFile));
-				
+			  case 'empty' : {					
 				var strings = this.readFileAsString(stringsFileDest);
 				var dimens = this.readFileAsString(dimensFileDest);	
 				
@@ -263,9 +280,6 @@ module.exports = yeoman.generators.Base.extend({
 				break;  
 			  }
 			  case 'blank' : {
-				copyIfMissing(stringsFile, this.destinationPath(stringsFile));
-				copyIfMissing(dimensFile, this.destinationPath(dimensFile));
-				
 				var strings = this.readFileAsString(stringsFileDest);
 				var dimens = this.readFileAsString(dimensFileDest);
 				
@@ -286,12 +300,7 @@ module.exports = yeoman.generators.Base.extend({
 				if (stringsUpdated) { console.log(chalk.cyan('   update') + ' ' + stringsFile);}
 				break;
 			  }
-			  case 'fullscreen' : {
-				copyIfMissing(dimensFile, this.destinationPath(dimensFile));
-				copyIfMissing(colorsFile, this.destinationPath(colorsFile));
-				copyIfMissing(stylesFile, this.destinationPath(stylesFile));
-				copyIfMissing(attrsFile, this.destinationPath(attrsFile));
-				
+			  case 'fullscreen' : {		
 				var strings = this.readFileAsString(stringsFileDest);
 				var colors = this.readFileAsString(colorsFileDest);
 				var styles = this.readFileAsString(stylesFileDest);
@@ -340,7 +349,7 @@ module.exports = yeoman.generators.Base.extend({
 		  }
 	  }
 	},
-	
+	  	
 	layout: function () {
 	  if (this.okay) {
 		  var layoutFile = 'app/src/main/res/layout/' + this.layoutName + '.xml';
@@ -355,7 +364,7 @@ module.exports = yeoman.generators.Base.extend({
 		  var manifestFile = this.destinationPath('app/src/main/AndroidManifest.xml');
 		  var manifest = this.readFileAsString(manifestFile);
 		  
-		  if (this.launcher) {
+		  if (this.launcher == 'true') {
 			if (!manifest.contains('LAUNCHER')) {
 			// Add launcher activity
 			wiring.appendToFile (manifestFile, 'application',
