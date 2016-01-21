@@ -3,6 +3,8 @@ package <%= activityPackage %>;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
+import <%= appPackage %>.R;
+
 public class <%= activityName %> extends AppCompatActivity {
 
     @Override

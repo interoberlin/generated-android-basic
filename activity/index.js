@@ -83,6 +83,13 @@ module.exports = yeoman.generators.Base.extend({
         type : String,
         required : false
       });
+	  this.argument('appPackage', {
+		type : String,
+		required : false
+	  });
+	  
+	  this.appPackage = this.config.get("appPackage");
+	  console.log("this.appPackage " + this.appPackage);
     },
 
     initializing : function () {
@@ -150,8 +157,8 @@ module.exports = yeoman.generators.Base.extend({
 
       promptRest : function () {
         if (this.activityPackage == null || this.layoutName == null || this.launcher == null) {
-          var questions = 5;
           var appPackage = this.config.get("appPackage");
+          var questions = 5;
           var done = this.async();
           var prompts = [{
               name : 'activityPackage',
