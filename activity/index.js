@@ -407,7 +407,7 @@ module.exports = yeoman.generators.Base.extend({
                 }
 
                 if (!attrs.contains('<declare-styleable name="ButtonBarContainerTheme">')) {
-                  wiring.appendToFile(attrsFileDest, 'resources', '\t<declare-styleable name="ButtonBarContainerTheme">\n\t<attr name="metaButtonBarStyle" format="reference" />\n\t        <attr name="metaButtonBarButtonStyle" format="reference" />\n</declare-styleable>');
+                  wiring.appendToFile(attrsFileDest, 'resources', '\t<declare-styleable name="ButtonBarContainerTheme">\n\t<attr name="metaButtonBarStyle" format="reference"></attr>\n\t        <attr name="metaButtonBarButtonStyle" format="reference"></attr>\n</declare-styleable>');
                   attrsUpdated = true;
                 }
 
