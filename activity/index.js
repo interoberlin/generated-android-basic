@@ -407,7 +407,7 @@ module.exports = yeoman.generators.Base.extend({
                 }
 
                 if (!attrs.contains('<declare-styleable name="ButtonBarContainerTheme">')) {
-                  wiring.appendFile(attrsFileDest, 'resources', '\t<declare-styleable name="ButtonBarContainerTheme">\n\t<attr name="metaButtonBarStyle" format="reference" />\n\t        <attr name="metaButtonBarButtonStyle" format="reference" />\n</declare-styleable>');
+                  wiring.appendToFile(attrsFileDest, 'resources', '\t<declare-styleable name="ButtonBarContainerTheme">\n\t<attr name="metaButtonBarStyle" format="reference" />\n\t        <attr name="metaButtonBarButtonStyle" format="reference" />\n</declare-styleable>');
                   attrsUpdated = true;
                 }
 
@@ -430,6 +430,7 @@ module.exports = yeoman.generators.Base.extend({
             }
           } catch (err) {
             console.log(chalk.yellow('     warn') + ' error updating res files');
+            console.log(chalk.red('     error') + err);
           }
         }
       },
