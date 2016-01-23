@@ -31,15 +31,9 @@ function templateDirectory(source, destination) {
 module.exports = yeoman.generators.Base.extend({
 	constructor: function () {
     yeoman.generators.Base.apply(this, arguments);
-
-	// Defaults
-	this.androidTargetSdkVersion = 23;
-	this.androidMinSdkVersion = 17;
 	
 	this.argument('appName', { type: String, required: false });
 	this.argument('appPackage', { type: String, required: false });
-	this.argument('androidTargetSdkVersion', { type: String, required: false });
-	this.argument('androidMinSdkVersion', { type: String, required: false });
   },
   
   initializing: function () {
@@ -48,7 +42,8 @@ module.exports = yeoman.generators.Base.extend({
   },
 
   prompting: function () {
-
+	this.androidTargetSdkVersion = 23;
+	this.androidMinSdkVersion = 17;
 	  
 	if (this.appName == null || this.appPackage == null) {
 		var done = this.async();
