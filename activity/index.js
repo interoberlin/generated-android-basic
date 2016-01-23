@@ -83,12 +83,12 @@ module.exports = yeoman.generators.Base.extend({
         type : String,
         required : false
       });
-	  this.argument('appPackage', {
-		type : String,
-		required : false
-	  });
-	  
-	  this.appPackage = this.config.get("appPackage");
+      this.argument('appPackage', {
+        type : String,
+        required : false
+      });
+
+      this.appPackage = this.config.get("appPackage");
     },
 
     initializing : function () {
@@ -290,7 +290,7 @@ module.exports = yeoman.generators.Base.extend({
               }
               break;
             }
-		  case 'login': {
+          case 'login': {
               if (!exists(this.destinationPath(stringsFile))) {
                 this.copy(stringsFile, stringsFile);
               }
@@ -444,7 +444,7 @@ module.exports = yeoman.generators.Base.extend({
 
                 break;
               }
-			  case 'login': {
+            case 'login': {
                 var strings = this.readFileAsString(stringsFileDest);
                 var dimens = this.readFileAsString(dimensFileDest);
 
@@ -455,44 +455,44 @@ module.exports = yeoman.generators.Base.extend({
                 if (!strings.contains('<!-- Strings related to login -->')) {
                   wiring.appendToFile(stringsFileDest, 'resources', '\n\t<!-- Strings related to login --> \n');
                   stringsUpdated = true;
-                }	
-				if (!strings.contains('<string name="prompt_email">')) {
+                }
+                if (!strings.contains('<string name="prompt_email">')) {
                   wiring.appendToFile(stringsFileDest, 'resources', '\t<string name="prompt_email">Email</string> \n');
                   stringsUpdated = true;
                 }
-				if (!strings.contains('<string name="prompt_password">')) {
+                if (!strings.contains('<string name="prompt_password">')) {
                   wiring.appendToFile(stringsFileDest, 'resources', '\t<string name="prompt_password">Password (optional)</string> \n');
                   stringsUpdated = true;
                 }
-				if (!strings.contains('<string name="action_sign_in">')) {
+                if (!strings.contains('<string name="action_sign_in">')) {
                   wiring.appendToFile(stringsFileDest, 'resources', '\t<string name="action_sign_in">Sign in or register</string> \n');
                   stringsUpdated = true;
                 }
-				if (!strings.contains('<string name="action_sign_in_short">')) {
+                if (!strings.contains('<string name="action_sign_in_short">')) {
                   wiring.appendToFile(stringsFileDest, 'resources', '\t<string name="action_sign_in_short">Sign in</string> \n');
                   stringsUpdated = true;
                 }
-				if (!strings.contains('<string name="error_invalid_email">')) {
+                if (!strings.contains('<string name="error_invalid_email">')) {
                   wiring.appendToFile(stringsFileDest, 'resources', '\t<string name="error_invalid_email">This email address is invalid</string> \n');
                   stringsUpdated = true;
                 }
-				if (!strings.contains('<string name="error_invalid_password">')) {
+                if (!strings.contains('<string name="error_invalid_password">')) {
                   wiring.appendToFile(stringsFileDest, 'resources', '\t<string name="error_invalid_password">This password is too short</string> \n');
                   stringsUpdated = true;
                 }
-				if (!strings.contains('<string name="error_incorrect_password">')) {
+                if (!strings.contains('<string name="error_incorrect_password">')) {
                   wiring.appendToFile(stringsFileDest, 'resources', '\t<string name="error_incorrect_password">This password is incorrect</string> \n');
                   stringsUpdated = true;
                 }
-				if (!strings.contains('<string name="error_field_required">')) {
+                if (!strings.contains('<string name="error_field_required">')) {
                   wiring.appendToFile(stringsFileDest, 'resources', '\t<string name="error_field_required">This field is required</string> \n');
                   stringsUpdated = true;
                 }
-				if (!strings.contains('<string name="permission_rationale">')) {
+                if (!strings.contains('<string name="permission_rationale">')) {
                   wiring.appendToFile(stringsFileDest, 'resources', '\t <string name="permission_rationale">"Contacts permissions are needed for providing email completions."</string> \n');
                   stringsUpdated = true;
                 }
-				if (!dimens.contains('<dimen name="activity_horizontal_margin">')) {
+                if (!dimens.contains('<dimen name="activity_horizontal_margin">')) {
                   wiring.appendToFile(dimensFileDest, 'resources', '\t<dimen name="activity_horizontal_margin">16dp</dimen>\n');
                   dimensUpdated = true;
                 }
@@ -507,9 +507,9 @@ module.exports = yeoman.generators.Base.extend({
                 if (dimensUpdated) {
                   console.log(chalk.cyan('   update') + ' ' + dimensFile);
                 }
-				
-				break;
-			  }
+
+                break;
+              }
             }
           } catch (err) {
             console.log(chalk.yellow('     warn') + ' error updating res files');
@@ -517,8 +517,8 @@ module.exports = yeoman.generators.Base.extend({
           }
         }
       },
-	  buildgradle : function () {
-		if (this.okay) {
+      buildgradle : function () {
+        if (this.okay) {
           try {
             var buildFile = 'app/build.gradle';
 
@@ -530,22 +530,24 @@ module.exports = yeoman.generators.Base.extend({
             case 'login': {
                 var build = this.readFileAsString(buildFileDest);
 
-                if (!build.contains('<string name="title_' + this.layoutName + '">')) {				  
-				  build.replace('dependencies {', 'dependencies {\ncompile \'com.android.support:design:23.1.1\'')
-                  this.write(buildFileDest, build);
-				  buildUpdated = true;
+                if (build.contains('dependencies {')) {
+                  this.conflicter.force = true;
+                  var b = build.replace('dependencies {', 'dependencies {\n\tcompile \'com.android.support:design:23.1.1\'');
+                  this.write(buildFileDest, b);
+                  this.conflicter.force = false;
+                  buildUpdated = true;
                 }
-				
+
                 if (buildUpdated) {
                   console.log(chalk.cyan('   update') + ' ' + buildFile);
                 }
 
                 break;
               }
-			}
+            }
           } catch (err) {}
         }
-	  },
+      },
       manifest : function () {
         if (this.okay) {
           try {
