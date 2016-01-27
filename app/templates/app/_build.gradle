@@ -5,7 +5,7 @@ android {
     buildToolsVersion "23.0.1"
 
     defaultConfig {
-        applicationId "android.com.basic"
+        applicationId "<%= appPackage %>"
         minSdkVersion <%= androidMinSdkVersion %>
         targetSdkVersion <%= androidTargetSdkVersion %>
         versionCode 1
